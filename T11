@@ -1,0 +1,375 @@
+Program T11Fernando;
+USES CRT;
+CONST
+  TAMANHO     = 10;
+  AGUA        = '.';
+  NAVIO       = 'N';
+  ACERTO      = 'X';
+  AGUA_TIRO   = 'O';
+  ARQ_HIST    = 'HISTORICO.TXT';
+TYPE
+  TTabuleiro  = ARRAY[1..TAMANHO, 1..TAMANHO] OF CHAR;
+  TNome       = STRING[30];
+  TJogador = RECORD
+    nome        : TNome;
+    tabuleiro   : TTabuleiro;  
+    visao       : TTabuleiro;  
+    navios_vivos: INTEGER;
+    tiros_dados  : INTEGER;
+    acertos     : INTEGER;
+    rodadas_ganhas: INTEGER;
+  END;
+  THistorico = RECORD
+    jogador1  : TNome;
+    jogador2  : TNome;
+    vencedor  : TNome;
+    tiros_j1  : INTEGER;
+    tiros_j2  : INTEGER;
+    acertos_j1: INTEGER;
+    acertos_j2: INTEGER;
+    navios    : INTEGER;
+  END;
+VAR
+  J1, J2      : TJogador;
+  hist        : THistorico;
+  arq         : TEXT;
+  opcao       : INTEGER;
+  jogar_de_novo: BOOLEAN;
+PROCEDURE LimparTela;
+BEGIN
+  CLRSCR;
+END;
+PROCEDURE Pausa;
+BEGIN
+  WRITELN;
+  WRITE('Pressione ENTER para continuar...');
+  READLN;
+END;
+PROCEDURE InicializarTabuleiro(VAR tab: TTabuleiro);
+VAR i, j: INTEGER;
+BEGIN
+  FOR i := 1 TO TAMANHO DO
+    FOR j := 1 TO TAMANHO DO
+      tab[i][j] := AGUA;
+END;
+PROCEDURE ExibirTabuleiro(VAR tab: TTabuleiro; mostrar_navios: BOOLEAN);
+VAR i, j: INTEGER;
+BEGIN
+  WRITE('   ');
+  FOR j := 1 TO TAMANHO DO
+    WRITE(j:3);
+  WRITELN;
+  WRITELN('   ------------------------------');
+  FOR i := 1 TO TAMANHO DO
+  BEGIN
+    WRITE(i:2, '|');
+    FOR j := 1 TO TAMANHO DO
+    BEGIN
+      IF (tab[i][j] = NAVIO) AND NOT mostrar_navios THEN
+        WRITE('  ' + AGUA)
+      ELSE
+        WRITE('  ' + tab[i][j]);
+    END;
+    WRITELN;
+  END;
+END;
+PROCEDURE ExibirDuplo(VAR jAtual, jOponente: TJogador);
+VAR i, j: INTEGER;
+BEGIN
+  WRITELN('=== SEU TABULEIRO ===             === TABULEIRO INIMIGO ===');
+  WRITE('   ');
+  FOR j := 1 TO TAMANHO DO WRITE(j:3);
+  WRITE('        ');
+  FOR j := 1 TO TAMANHO DO WRITE(j:3);
+  WRITELN;
+  FOR i := 1 TO TAMANHO DO
+  BEGIN
+    WRITE(i:2, '|');
+    FOR j := 1 TO TAMANHO DO
+      WRITE('  ' + jAtual.tabuleiro[i][j]);
+    WRITE('      ');
+    WRITE(i:2, '|');
+    FOR j := 1 TO TAMANHO DO
+      WRITE('  ' + jAtual.visao[i][j]);
+    WRITELN;
+  END;
+END;
+FUNCTION PodePosicionar(VAR tab: TTabuleiro; linha, col, tam, dir: INTEGER): BOOLEAN;
+VAR k: INTEGER;
+BEGIN
+  PodePosicionar := TRUE;
+  IF dir = 0 THEN 
+  BEGIN
+    IF col + tam - 1 > TAMANHO THEN BEGIN PodePosicionar := FALSE; EXIT; END;
+    FOR k := 0 TO tam - 1 DO
+      IF tab[linha][col + k] <> AGUA THEN BEGIN PodePosicionar := FALSE; EXIT; END;
+  END
+  ELSE 
+  BEGIN
+    IF linha + tam - 1 > TAMANHO THEN BEGIN PodePosicionar := FALSE; EXIT; END;
+    FOR k := 0 TO tam - 1 DO
+      IF tab[linha + k][col] <> AGUA THEN BEGIN PodePosicionar := FALSE; EXIT; END;
+  END;
+END;
+PROCEDURE PosicionarNavio(VAR tab: TTabuleiro; linha, col, tam, dir: INTEGER);
+VAR k: INTEGER;
+BEGIN
+  IF dir = 0 THEN
+    FOR k := 0 TO tam - 1 DO tab[linha][col + k] := NAVIO
+  ELSE
+    FOR k := 0 TO tam - 1 DO tab[linha + k][col] := NAVIO;
+END;
+PROCEDURE ColocarNavios(VAR jogador: TJogador);
+CONST
+  QTD_NAVIOS = 5;
+  TAMANHOS: ARRAY[1..5] OF INTEGER = (4, 3, 3, 2, 2);
+  NOMES_NAV: ARRAY[1..5] OF STRING[20] =
+    ('Porta-Avioes(4)', 'Destroyer(3)  ', 'Submarino(3)  ',
+     'Cruzador(2)   ', 'Torpedeiro(2) ');
+VAR
+  i, linha, col, dir: INTEGER;
+  valido: BOOLEAN;
+  resp: CHAR;
+BEGIN
+  InicializarTabuleiro(jogador.tabuleiro);
+  jogador.navios_vivos := 0;
+  FOR i := 1 TO QTD_NAVIOS DO
+    jogador.navios_vivos := jogador.navios_vivos + TAMANHOS[i];
+  LimparTela;
+  WRITELN('=== POSICIONAMENTO DE NAVIOS: ', jogador.nome, ' ===');
+  WRITELN;
+  FOR i := 1 TO QTD_NAVIOS DO
+  BEGIN
+    REPEAT
+      LimparTela;
+      WRITELN('Jogador: ', jogador.nome);
+      WRITELN('Posicionando: ', NOMES_NAV[i]);
+      WRITELN;
+      ExibirTabuleiro(jogador.tabuleiro, TRUE);
+      WRITELN;
+      WRITE('Linha (1-10): '); READLN(linha);
+      WRITE('Coluna (1-10): '); READLN(col);
+      WRITE('Direcao (0=horizontal, 1=vertical): '); READLN(dir);
+      valido := FALSE;
+      IF (linha >= 1) AND (linha <= TAMANHO) AND
+         (col >= 1) AND (col <= TAMANHO) AND
+         (dir >= 0) AND (dir <= 1) THEN
+        valido := PodePosicionar(jogador.tabuleiro, linha, col, TAMANHOS[i], dir);
+      IF NOT valido THEN
+      BEGIN
+        WRITELN('Posicao invalida! Tente novamente.');
+        Pausa;
+      END;
+    UNTIL valido;
+    PosicionarNavio(jogador.tabuleiro, linha, col, TAMANHOS[i], dir);
+  END;
+  LimparTela;
+  WRITELN('Navios posicionados com sucesso!');
+  ExibirTabuleiro(jogador.tabuleiro, TRUE);
+  Pausa;
+  LimparTela;
+  WRITELN('Afaste-se do computador. Vez do proximo jogador.');
+  Pausa;
+END;
+FUNCTION ProcessarTiro(VAR atirador, alvo: TJogador; linha, col: INTEGER): BOOLEAN;
+BEGIN
+  atirador.tiros_dados := atirador.tiros_dados + 1;
+  IF alvo.tabuleiro[linha][col] = NAVIO THEN
+  BEGIN
+    alvo.tabuleiro[linha][col]    := ACERTO;
+    atirador.visao[linha][col]    := ACERTO;
+    atirador.acertos              := atirador.acertos + 1;
+    alvo.navios_vivos             := alvo.navios_vivos - 1;
+    ProcessarTiro                 := TRUE;
+  END
+  ELSE
+  BEGIN
+    alvo.tabuleiro[linha][col]    := AGUA_TIRO;
+    atirador.visao[linha][col]    := AGUA_TIRO;
+    ProcessarTiro                 := FALSE;
+  END;
+END;
+PROCEDURE FazerTiro(VAR atirador, alvo: TJogador);
+VAR
+  linha, col: INTEGER;
+  acertou   : BOOLEAN;
+  valido    : BOOLEAN;
+BEGIN
+  REPEAT
+    LimparTela;
+    WRITELN('=== VEZ DE: ', atirador.nome, ' ===');
+    WRITELN('Navios inimigos restantes: ', alvo.navios_vivos);
+    WRITELN;
+    ExibirDuplo(atirador, alvo);
+    WRITELN;
+    WRITE('Linha do tiro (1-10): '); READLN(linha);
+    WRITE('Coluna do tiro (1-10): '); READLN(col);
+    valido := (linha >= 1) AND (linha <= TAMANHO) AND
+              (col >= 1) AND (col <= TAMANHO) AND
+              (atirador.visao[linha][col] = AGUA);
+    IF NOT valido THEN
+    BEGIN
+      WRITELN('Posicao invalida ou ja atirada!');
+      Pausa;
+    END;
+  UNTIL valido;
+  acertou := ProcessarTiro(atirador, alvo, linha, col);
+  LimparTela;
+  IF acertou THEN
+  BEGIN
+    WRITELN('*** ACERTOU UM NAVIO! ***');
+    IF alvo.navios_vivos = 0 THEN
+      WRITELN('*** TODOS OS NAVIOS AFUNDADOS! ', atirador.nome, ' VENCEU! ***');
+  END
+  ELSE
+    WRITELN('--- Agua! Tiro na posicao (', linha, ',', col, ') ---');
+  Pausa;
+END;
+PROCEDURE SalvarHistorico(VAR h: THistorico);
+BEGIN
+  ASSIGN(arq, ARQ_HIST);
+  {$I-} APPEND(arq); {$I+}
+  IF IORESULT <> 0 THEN REWRITE(arq);
+  WRITELN(arq, '------------------------------------');
+  WRITELN(arq, 'J1      : ', h.jogador1);
+  WRITELN(arq, 'J2      : ', h.jogador2);
+  WRITELN(arq, 'VENCEDOR: ', h.vencedor);
+  WRITELN(arq, 'TIROS J1: ', h.tiros_j1, '  ACERTOS: ', h.acertos_j1);
+  WRITELN(arq, 'TIROS J2: ', h.tiros_j2, '  ACERTOS: ', h.acertos_j2);
+  WRITELN(arq, 'NAVIOS  : ', h.navios);
+  CLOSE(arq);
+END;
+PROCEDURE ExibirHistorico;
+VAR linha: STRING[80];
+BEGIN
+  ASSIGN(arq, ARQ_HIST);
+  {$I-} RESET(arq); {$I+}
+  IF IORESULT <> 0 THEN
+  BEGIN
+    WRITELN('Nenhum historico encontrado.');
+    Pausa;
+    EXIT;
+  END;
+  LimparTela;
+  WRITELN('=== HISTORICO DE PARTIDAS ===');
+  WRITELN;
+  WHILE NOT EOF(arq) DO
+  BEGIN
+    READLN(arq, linha);
+    WRITELN(linha);
+  END;
+  CLOSE(arq);
+  Pausa;
+END;
+PROCEDURE ExibirEstatisticas(VAR j1, j2: TJogador; vencedor: TNome);
+VAR pct1, pct2: REAL;
+BEGIN
+  LimparTela;
+  WRITELN('============================================');
+  WRITELN('           RESULTADO DA PARTIDA             ');
+  WRITELN('============================================');
+  WRITELN;
+  WRITELN('VENCEDOR: ', vencedor);
+  WRITELN;
+  IF j1.tiros_dados > 0 THEN
+    pct1 := (j1.acertos / j1.tiros_dados) * 100
+  ELSE pct1 := 0;
+  IF j2.tiros_dados > 0 THEN
+    pct2 := (j2.acertos / j2.tiros_dados) * 100
+  ELSE pct2 := 0;
+  WRITELN('JOGADOR          TIROS  ACERTOS  PRECISAO');
+  WRITELN('------------------------------------------');
+  WRITELN(j1.nome:20, j1.tiros_dados:6, j1.acertos:8, pct1:9:1, '%');
+  WRITELN(j2.nome:20, j2.tiros_dados:6, j2.acertos:8, pct2:9:1, '%');
+  WRITELN;
+  Pausa;
+END;
+PROCEDURE InicializarJogador(VAR j: TJogador);
+BEGIN
+  InicializarTabuleiro(j.tabuleiro);
+  InicializarTabuleiro(j.visao);
+  j.navios_vivos   := 0;
+  j.tiros_dados    := 0;
+  j.acertos        := 0;
+END;
+PROCEDURE JogarPartida;
+VAR
+  vez     : INTEGER;
+  fim     : BOOLEAN;
+  vencedor: TNome;
+BEGIN
+  InicializarJogador(J1);
+  InicializarJogador(J2);
+  LimparTela;
+  WRITE('Nome do Jogador 1: '); READLN(J1.nome);
+  WRITE('Nome do Jogador 2: '); READLN(J2.nome);
+  ColocarNavios(J1);
+  ColocarNavios(J2);
+  InicializarTabuleiro(J1.visao);
+  InicializarTabuleiro(J2.visao);
+  vez := 1;
+  fim := FALSE;
+  REPEAT
+    IF vez = 1 THEN
+    BEGIN
+      FazerTiro(J1, J2);
+      IF J2.navios_vivos = 0 THEN
+      BEGIN
+        fim     := TRUE;
+        vencedor := J1.nome;
+        J1.rodadas_ganhas := J1.rodadas_ganhas + 1;
+      END;
+    END
+    ELSE
+    BEGIN
+      FazerTiro(J2, J1);
+      IF J1.navios_vivos = 0 THEN
+      BEGIN
+        fim     := TRUE;
+        vencedor := J2.nome;
+        J2.rodadas_ganhas := J2.rodadas_ganhas + 1;
+      END;
+    END;
+    IF vez = 1 THEN vez := 2 ELSE vez := 1;
+  UNTIL fim;
+  ExibirEstatisticas(J1, J2, vencedor);
+  hist.jogador1   := J1.nome;
+  hist.jogador2   := J2.nome;
+  hist.vencedor   := vencedor;
+  hist.tiros_j1   := J1.tiros_dados;
+  hist.tiros_j2   := J2.tiros_dados;
+  hist.acertos_j1 := J1.acertos;
+  hist.acertos_j2 := J2.acertos;
+  hist.navios     := J1.acertos + J2.acertos;
+  SalvarHistorico(hist);
+END;
+BEGIN
+  jogar_de_novo := TRUE;
+  WHILE jogar_de_novo DO
+  BEGIN
+    LimparTela;
+    WRITELN('╔══════════════════════════════════╗');
+    WRITELN('║       BATALHA NAVAL - T11        ║');
+    WRITELN('║  Fernando Augusto Bueno          ║');
+    WRITELN('╠══════════════════════════════════╣');
+    WRITELN('║  1 - Nova Partida                ║');
+    WRITELN('║  2 - Ver Historico               ║');
+    WRITELN('║  3 - Sair                        ║');
+    WRITELN('╚══════════════════════════════════╝');
+    WRITELN;
+    REPEAT
+      WRITE('Opcao: ');
+      READLN(opcao);
+      IF (opcao < 1) OR (opcao > 3) THEN
+        WRITELN('Opcao invalida!');
+    UNTIL (opcao >= 1) AND (opcao <= 3);
+    CASE opcao OF
+      1: JogarPartida;
+      2: ExibirHistorico;
+      3: jogar_de_novo := FALSE;
+    END;
+  END;
+  LimparTela;
+  WRITELN('Obrigado por jogar Batalha Naval!');
+  WRITELN('Autor: Fernando Augusto Bueno Canquerini');
+END.
