@@ -1,0 +1,33 @@
+Program T03Fernando;
+//Autor:Fernando Augusto Bueno Canquerini 
+uses tardenoite;
+var
+  dia, mes, ano, resp: integer;
+  meses: array[1..12] of string[20];
+begin
+  meses[1] := 'JANEIRO';
+  meses[2] := 'FEVEREIRO';
+  meses[3] := 'MARÇO';
+  meses[4] := 'ABRIL';
+  meses[5] := 'MAIO';
+  meses[6] := 'JUNHO';
+  meses[7] := 'JULHO';
+  meses[8] := 'AGOSTO';
+  meses[9] := 'SETEMBRO';
+  meses[10] := 'OUTUBRO';
+  meses[11] := 'NOVEMBRO';
+  meses[12] := 'DEZEMBRO';
+ repeat
+   repeat
+      leia('Digite o dia: ', dia);
+      leia('Digite o mês: ', mes);
+      leia('Digite o ano: ', ano);
+      if not valdata(dia, mes, ano) then
+       writeln('Data inválida. Por favor, digite uma data válida.');
+      until valdata(dia, mes, ano); 
+      writeln('CURITIBA, ', dia, ' DE ', meses[mes], ' DE ', ano, '.');
+    writeln('QUER CONTINUAR 1 (SIM), outro número (NÃO)?');
+    leia('', resp); // 
+  until resp <> 1;
+  termine;
+End.
