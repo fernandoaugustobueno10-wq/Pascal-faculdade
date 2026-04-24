@@ -1,0 +1,39 @@
+Program T01Fernando;
+var
+  numero, i: Integer;
+begin
+  repeat
+    write('Digite um numero: ');
+    readln(numero);
+     if numero > 0 then
+    begin
+      writeln('Numero: ', numero);
+      write('Divisores: ');
+        for i := -numero to -1 do
+        if numero mod abs(i) = 0 then
+          write(i, ' ');
+				for i := 1 to numero do
+        if numero mod i = 0 then
+          write(i, ' ');
+					writeln;
+       end
+        else if numero = 0 then
+        begin
+      writeln('Numero: 0');
+      writeln('Divisores: Todos os numeros inteiros (divisão indefinida)');
+    end
+    else
+    begin
+      writeln('Numero: ', numero);
+      write('Divisores: ');
+      for i := numero to -1 do
+        if numero mod i = 0 then
+          write(i, ' ');
+        for i := 1 to abs(numero) do
+        if numero mod i = 0 then
+          write(i, ' ');
+       writeln;
+      end;
+  until numero < 0;
+end.
+
