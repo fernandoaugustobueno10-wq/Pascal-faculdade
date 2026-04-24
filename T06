@@ -1,5 +1,5 @@
 Program T06FernandoAugustoBueno;
-//Autor:FernandoAugustoBuenoCanquerini
+//Autor:FernandoAugustoBuenoCanquerini.
 USES TARDENOITE;
 VAR
   ARQ: TEXT;
