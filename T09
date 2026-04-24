@@ -1,0 +1,71 @@
+Program T09FERNANDO;
+//AUTORES: Fernando Augusto Bueno Canquerini 
+USES tardeNOITE;
+var
+ arq:file of regis;
+ reg:regis;
+ vagas:text;
+ VV, cargos:array[1..12] of integer;
+ REGVAG: STRING[31];
+ vet:vetor;
+ soma: string[3];
+ no: array[1..6] of string[3];
+ regdata: string[8];
+ idade:string[7];
+ x,y,z,indice_atual,tot,e,data:integer;
+Begin
+ assign(arq,'cand.ind');
+ assign(vagas,'vagas.txt');
+ reset(arq);
+ reset(vagas);
+ x:=0;
+ REPEAT
+  READLN(VAGAS,REGVAG);
+  x:=x+1;
+  VAL(COPY(REGVAG,30,2),VV[x],e);
+ UNTIL(EOF(VAGAS));
+ CLOSE(VAGAS);
+ x:=0;
+ repeat
+  read(arq,reg);
+  indice_atual:=x+1;          
+vet[indice_atual].pf:=x;    
+str(reg.som:3,soma);
+for y:=1 to 6 do
+str(reg.notas[y]:3, no[y]);
+regdata:= reg.data.ano + reg.data.mes + reg.data.dia;
+val(regdata, data, e);
+data:= 20200101 - data;
+str(data:6, idade);
+vet[indice_atual].cc:=soma + no[4] + no[5] + no[3] + no[2] + no[6] + no[1] + idade; 
+x:=x+1;
+ until(eof(arq));
+tot:=indice_atual;
+ WRITELN(' PRIMEIROS 15 ELEMENTOS ANTES DA ORDENACAO. CC E PF');
+ for x:=1 to 15 do
+  writeln(' ',vet[x].cc,'  ',vet[x].pf:5);
+ writeln(' inicio da ordenacao');
+ ordem(vet,indice_atual);
+ writeln(' fim da ordenação');
+ WRITELN(' PRIMEIROS 15 ELEMENTOS DO VETOR DEPOIS DA ORDENACAO. CC E PF');
+ for x:=tot downto tot-15 do
+  writeln(' ',vet[x].cc,'  ',vet[x].pf:5);
+ write(' enter para continuar');
+ readln;
+ writeln;
+FOR x:=TOT DOWNTO 1 DO
+  BEGIN
+   z:= z+1;
+   seek(arq,vet[x].pf);  
+ read(arq,reg);
+ reg.clg:= z;
+ cargos[reg.car] := cargos[reg.car] + 1;
+ reg.clc:= cargos[reg.car];
+ if reg.clc <= vv[reg.car] then
+ reg.ccl:= reg.car;
+ SEEK(ARQ,VET[x].PF);
+ WRITE(ARQ,REG);
+END;
+ termine; 
+ CLOSE(ARQ);
+End.
