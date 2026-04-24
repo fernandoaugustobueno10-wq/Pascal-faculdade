@@ -1,0 +1,73 @@
+Program T07FernandoAugusto;
+//AUTOR:Fernando Augusto Bueno Canquerini
+USES tardenoite;
+VAR 
+  ARQ: FILE OF REGIS;
+  REG: REGIS;
+  numeroStr: STRING[4];
+  turmaStr: STRING[2];
+  vetorOrdenado: VETOR;
+  i, j, posicaoFisica, totalRegistros, opcaoMenu, turmaAnterior: INTEGER;
+  IND, CONTL: INTEGER;
+Begin
+  ASSIGN(ARQ, 'CAND.IND');
+  RESET(ARQ);
+  REPEAT
+    WRITELN('1-LISTA DE PORTA DA TURMA (ALFABETICA)');
+    LEIA('2-LISTA DE CHAMADA DA TURMA ', opcaoMenu);
+    IF (opcaoMenu < 1) OR (opcaoMenu > 2) THEN
+      WRITELN('ILEGAL');
+  UNTIL (opcaoMenu >= 1) AND (opcaoMenu <= 2);
+  WHILE NOT EOF(ARQ) DO
+  BEGIN
+    READ(ARQ, REG);
+    IND := IND + 1;
+    vetorOrdenado[IND].PF := posicaoFisica;  
+    STR(REG.TUR:2, turmaStr);               
+  IF (opcaoMenu = 1) THEN
+      vetorOrdenado[IND].CC := turmaStr + REG.NOME  
+    ELSE
+    BEGIN
+      STR(REG.NUM:4, numeroStr);                    
+      vetorOrdenado[IND].CC := turmaStr + numeroStr;
+    END;
+    posicaoFisica := posicaoFisica + 1;
+  END;
+  WRITELN('LIDOS=', IND:5, ' REGISTROS');
+  FOR i := 1 TO 20 DO
+    WRITELN(i:5, vetorOrdenado[i].PF:5, ' ', vetorOrdenado[i].CC);
+  totalRegistros := IND;
+  WRITELN('ORDENANDO, ESPERE');
+  ORDEM(vetorOrdenado, totalRegistros);
+   FOR i := 1 TO 20 DO
+    WRITELN(i:5, vetorOrdenado[i].PF:5, ' ', vetorOrdenado[i].CC);
+    WRITELN('ENTER PARA CONTINUAR');
+  READLN;
+  CONTL := 1;
+  FOR j := 1 TO totalRegistros DO
+  BEGIN
+    SEEK(ARQ, vetorOrdenado[j].PF);
+    READ(ARQ, REG);
+    IF ((CONTL - 1) MOD 20 = 0) OR (turmaAnterior <> REG.TUR) THEN
+    BEGIN
+      READLN;
+      CLRSCR;
+      WRITELN;
+      WRITELN('==========> TURMA: ', REG.TUR, ' <==========');
+      WRITE('  ORD  NUM N O M E                             ===C P F=== NASCIMENTO CS  N1');
+      WRITELN('  N2  N3  N4  N5  N6   SO   CG  CC CV FA TU');
+      CONTL := 1;
+    END;
+    WRITE(j:5, REG.NUM:5, ' ', REG.NOME, ' ', REG.CPF, ' ',
+          REG.DATA.DIA, '/', REG.DATA.MES, '/', REG.DATA.ANO,
+          REG.CAR:3);
+    FOR i := 1 TO 6 DO
+      WRITE(REG.NOTAS[i]:4);
+    WRITELN(REG.SOM:5, REG.CLG:5, REG.CLC:4,
+            REG.CCL:3, REG.FALTA:3, REG.TUR:3);
+						CONTL := CONTL + 1;
+              turmaAnterior := REG.TUR;
+  END;
+  TERMINE;
+  CLOSE(ARQ);
+End.
