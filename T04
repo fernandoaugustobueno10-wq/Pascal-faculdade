@@ -1,0 +1,84 @@
+PROGRAM T04Fernando;
+//autor:Fernando Augusto Bueno Canquerini
+USES TARDENOITE;
+VAR
+  CPFSTR: STRING[11];
+  I, SOMA, RESTO, J, K, ERRO, OPCAO:INTEGER;
+  CPF: ARRAY[1..11] OF INTEGER;
+FUNCTION CALCULA_J: INTEGER;
+BEGIN
+  SOMA := 0;
+  FOR I := 1 TO 9 DO
+    SOMA := SOMA + CPF[I] * (11 - I); 
+  RESTO := SOMA MOD 11;
+  IF RESTO < 2 THEN
+    CALCULA_J := 0
+  ELSE
+    CALCULA_J := 11 - RESTO;
+END;
+FUNCTION CALCULA_K: INTEGER;
+BEGIN
+  SOMA := 0;
+  FOR I := 1 TO 9 DO
+    SOMA := SOMA + CPF[I] * (12 - I); 
+  SOMA := SOMA + J * 2;
+  RESTO := SOMA MOD 11;
+  IF RESTO < 2 THEN
+    CALCULA_K := 0
+  ELSE
+    CALCULA_K := 11 - RESTO;
+END;
+BEGIN
+  REPEAT
+    WRITE('DIGITE O CPF (11 DIGITOS, SOMENTE NUMEROS): ');
+    READLN(CPFSTR);
+   IF CPFSTR = '00000000000' THEN
+    BEGIN
+      WRITELN('PROGRAMA ENCERRADO.');
+      TERMINE;
+      EXIT;
+    END;
+ IF LENGTH(CPFSTR) <> 11 THEN
+    BEGIN
+      WRITELN('CPF INVÁLIDO.');
+    END
+    ELSE
+    BEGIN
+      ERRO := 0;
+      FOR I := 1 TO 11 DO
+      BEGIN
+        VAL(CPFSTR[I], CPF[I], ERRO);
+        IF ERRO <> 0 THEN
+          BREAK;
+      END;
+    IF ERRO <> 0 THEN
+        WRITELN('CPF INVÁLIDO.')
+      ELSE
+      BEGIN
+        J := CALCULA_J;
+        IF J <> CPF[10] THEN
+          WRITELN('CPF INVÁLIDO.')
+        ELSE
+        BEGIN
+          K := CALCULA_K;
+          IF K <> CPF[11] THEN
+            WRITELN('CPF INVÁLIDO.')
+          ELSE
+            WRITELN('CPF VÁLIDO.');
+        END;
+      END;
+    END;
+   REPEAT
+      WRITELN;
+      WRITELN('(1) CONTINUAR');
+      WRITELN('(2) ENCERRAR');
+      LEIA('ESCOLHA UMA OPÇÃO: ', OPCAO);
+    UNTIL (OPCAO = 1) OR (OPCAO = 2);
+   IF OPCAO = 2 THEN
+    BEGIN
+      WRITELN('PROGRAMA ENCERRADO PELO USUÁRIO.');
+      TERMINE;
+      EXIT;
+    END;
+  UNTIL FALSE;
+END.
