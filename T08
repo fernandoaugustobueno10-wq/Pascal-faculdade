@@ -1,0 +1,83 @@
+Program T08Fernando_Lucas;
+//AUTORES: Fernando Augusto Bueno Canquerini
+USES tardeNOITE;
+var
+ arq:file of regis;
+ reg:regis;
+ notas:text;
+ vet:vetor;
+ x,y,z,posicao_encontrada,nao_usado,indice_atual,tot,tamanho_codigo,total_alterados,i,nota_numerica,j,e:integer;
+ numero_atual,numero_string,nota_string:string[4];
+ nota:string[28];
+ soma_disciplinas:array[1..6] OF INTEGER;
+ media_calculada:real;
+CONST
+diciplinas:ARRAY[1..6] OF STRING[28] = ('L.E.M                       ','MATEMATICA                  ','LOGICA                      ','CONHECIMENTO ESPEC. DO CARGO','INFORMATICA                 ','ATUALIDADES                 ');
+Begin
+  assign(arq,'cand.ind');
+  assign(notas,'notas.txt');
+  reset(arq);
+  reset(notas);
+    repeat
+     read(arq,reg);
+      indice_atual:=x+1;          
+      vet[indice_atual].pf:=x;    
+      str(reg.num,numero_string);
+      tamanho_codigo:=length(numero_string);
+      for y:=1 to 4-tamanho_codigo do
+      insert('0',numero_string,1);  
+      vet[indice_atual].cc:=numero_string; 
+      x:=x+1;
+    until(eof(arq));
+tot:=indice_atual;
+ WRITELN(' PRIMEIROS 15 ELEMENTOS ANTES DA ORDENACAO. CC E PF');
+ for x:=1 to 15 do
+  writeln(' ',vet[x].cc,'  ',vet[x].pf:5);
+ writeln(' inicio da ordenacao');
+ ordem(vet,indice_atual);
+ writeln(' fim da ordenacao');
+ WRITELN(' PRIMEIROS 15 ELEMENTOS DO VETOR DEPOIS DA ORDENACAO. CC E PF');
+ for x:=1 to 15 do
+  writeln(' ',vet[x].cc,'  ',vet[x].pf:5);
+ write(' enter para continuar');
+ readln;
+ writeln;
+  repeat
+  total_alterados:=total_alterados+1;
+  readln(notas,nota);
+  numero_atual:=copy(nota,1,4);
+  pebin1(vet,numero_atual,tot,posicao_encontrada);  
+  seek(arq,vet[posicao_encontrada].pf);
+  read(arq,reg);
+  reg.som:=0;
+FOR i:=1 to 6 do
+BEGIN
+j:=(4*i)+1;
+nota_string:=copy(nota,j,j+4);
+val(nota_string,nota_numerica,e);
+  reg.NOTAS[i]:=nota_numerica;
+  reg.som:=reg.som+nota_numerica;
+  soma_disciplinas[i]:=soma_disciplinas[i]+nota_numerica;
+  END;   
+SEEK(arq,vet[posicao_encontrada].PF);
+WRITE(arq,reg);
+ until eof(notas);
+ CLRSCR;
+ if(total_alterados=0) then
+  writeln('total_alterados igual a 0 impossivel calcular a media')
+ else
+ BEGIN
+ writeln('Total de registros alterados',total_alterados:5);
+ writeln;
+ writeln('DISCIPLINA                     MEDIA');
+ FOR i:=1 to 6 do
+ BEGIN
+ media_calculada:=soma_disciplinas[i]/total_alterados;
+ writeln(diciplinas[i],'  ', media_calculada:6:2);
+ END;
+ END;
+ WRITELN;
+TERMINE; 
+CLOSE(notas);
+CLOSE(arq);
+End.
