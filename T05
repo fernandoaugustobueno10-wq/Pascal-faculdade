@@ -1,0 +1,130 @@
+program T05FernandoAugusto;
+//Autor:Fernando Augusto Bueno Canquerini 
+uses TardeNoite;
+type
+  nono = record
+    nome: string[30];
+    nota: integer;
+  end;
+var
+  vet: array[1..51] of nono;
+  aux, temp: nono;
+  nom: string[30];
+  a, tot, i, j: integer;
+  notaTemp: integer;
+  contador: integer;
+  continua: boolean;
+begin
+  a := 0;
+  aux.nome := 'LUIZ SALGADO';
+  writeln('Digite os nomes e notas (digite FIM para encerrar):');
+  continua := true;
+  while continua do
+  begin
+    if a = 50 then
+    begin
+      writeln('Digite FIM');
+      repeat
+        write('Nome: ');
+        readln(nom);
+        nom := upcase(nom);
+        if nom <> 'FIM' then
+          writeln('ERRO: digite FIM');
+      until nom = 'FIM';
+      continua := false;
+    end
+    else
+    begin
+      write('Nome: ');
+      readln(nom);
+      nom := upcase(nom);
+      if nom = 'FIM' then
+        continua := false
+      else
+      begin
+        a := a + 1;
+        if a > 51 then
+        begin
+          writeln('ERRO: Limite de 51 nomes atingido!');
+          continua := false;
+        end
+        else
+        begin
+          vet[a].nome := nom;
+          repeat
+            LEIA('NOTA => ', notaTemp);
+            if (notaTemp < 0) or (notaTemp > 100) then
+              writeln('ERRO');
+          until (notaTemp >= 0) and (notaTemp <= 100);
+          vet[a].nota := notaTemp;
+        end;
+      end;
+    end;
+  end;
+  tot := a;
+  i := 1;
+  while i < tot do
+  begin
+    j := i + 1;
+    while j <= tot do
+    begin
+      if (vet[i].nome <= aux.nome) and (vet[j].nome <= aux.nome) then
+        if vet[i].nome > vet[j].nome then
+        begin
+          temp := vet[i];
+          vet[i] := vet[j];
+          vet[j] := temp;
+        end;
+      j := j + 1;
+    end;
+    i := i + 1;
+  end;
+  i := 1;
+  while i < tot do
+  begin
+    j := i + 1;
+    while j <= tot do
+    begin
+      if (vet[i].nome > aux.nome) and (vet[j].nome > aux.nome) then
+        if vet[i].nome < vet[j].nome then
+        begin
+          temp := vet[i];
+          vet[i] := vet[j];
+          vet[j] := temp;
+        end;
+      j := j + 1;
+    end;
+    i := i + 1;
+  end;
+	writeln;
+  writeln('NOMES <= LUIZ SALGADO (ORDEM CRESCENTE)');
+  contador := 0;
+  for i := 1 to tot do
+    if vet[i].nome <= aux.nome then
+    begin
+      write(vet[i].nome, '-Nota:', vet[i].nota);
+      contador := contador + 1;
+      if contador mod 3 = 0 then
+        writeln('.')
+      else
+        write('; ');
+    end;
+  if (contador mod 3 <> 0) and (contador > 0) then
+    writeln('.');
+  writeln;
+  writeln('NOMES > LUIZ SALGADO (ORDEM DECRESCENTE)');
+  contador := 0;
+  for i := 1 to tot do
+    if vet[i].nome > aux.nome then
+    begin
+      write(vet[i].nome, '-Nota:', vet[i].nota);
+      contador := contador + 1;
+      if contador mod 3 = 0 then
+        writeln('.')
+      else
+        write('; ');
+    end;
+  if (contador mod 3 <> 0) and (contador > 0) then
+    writeln('.');
+   TERMINE;
+end.
