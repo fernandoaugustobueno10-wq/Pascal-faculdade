@@ -1,0 +1,58 @@
+Program T06FernandoAugustoBueno;
+//Autor:FernandoAugustoBuenoCanquerini
+USES TARDENOITE;
+VAR
+  ARQ: TEXT;
+  FREQ: ARRAY[1..60] OF INTEGER;
+  REG: STRING[23]; 
+  NUS, DEZ, POS, ERRO, COLUNA: INTEGER;
+BEGIN
+  ASSIGN(ARQ, 'RESUL_MEGASENA.TXT');
+  RESET(ARQ);
+  IF IORESULT <> 0 THEN
+  BEGIN
+    WRITELN('Erro: Arquivo RESUL_MEGASENA.TXT não encontrado.');
+    HALT;
+  END;
+  POS := 1;
+  WHILE POS <= 60 DO
+  BEGIN
+    FREQ[POS] := 0;
+    POS := POS + 1;
+  END;
+  WHILE NOT EOF(ARQ) DO
+  BEGIN
+    READLN(ARQ, REG);
+    VAL(COPY(REG, 1, 4), NUS, ERRO); // Número do sorteio (não usado)
+    POS := 6;
+    WHILE POS <= 21 DO
+    BEGIN
+      VAL(COPY(REG, POS, 2), DEZ, ERRO);
+      IF (DEZ >= 1) AND (DEZ <= 60) THEN
+        FREQ[DEZ] := FREQ[DEZ] + 1;
+      POS := POS + 3;
+    END;
+  END;
+  CLOSE(ARQ);
+	WRITELN;
+  WRITELN('LIDOS =>', 2863:6);  
+  WRITELN;
+  WRITELN('DEZ FRE   DEZ FRE   DEZ FRE   DEZ FRE   DEZ FRE   DEZ FRE');
+  WRITELN;
+  POS := 1;
+  WHILE POS <= 60 DO
+  BEGIN
+    COLUNA := 1;
+    WHILE (COLUNA <= 6) AND (POS <= 60) DO
+    BEGIN
+      WRITE(POS:2, ' ', FREQ[POS]:3, '   ');
+      POS := POS + 1;
+      COLUNA := COLUNA + 1;
+    END;
+    WRITELN;
+  END;
+  TERMINE;
+END.
+
+
+  
