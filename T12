@@ -1,0 +1,340 @@
+Program T12Fernando;
+//Autor: Fernando Augusto Bueno Canquerini
+//Descricao: Jogo da Forca com categorias, dicas, placar e 2 jogadores
+
+USES CRT;
+
+CONST
+  MAX_ERROS    = 6;
+  MAX_PALAVRAS = 30;
+
+TYPE
+  TPalavra = RECORD
+    palavra   : STRING[30];
+    categoria : STRING[20];
+    dica      : STRING[60];
+  END;
+
+  TJogador = RECORD
+    nome      : STRING[30];
+    vitorias  : INTEGER;
+    derrotas  : INTEGER;
+    letras_usadas: STRING[26];
+  END;
+
+VAR
+  banco       : ARRAY[1..MAX_PALAVRAS] OF TPalavra;
+  J1, J2      : TJogador;
+  opcao       : INTEGER;
+  jogar_de_novo: BOOLEAN;
+  total_palavras: INTEGER;
+
+PROCEDURE InicializarBanco;
+BEGIN
+  total_palavras := 20;
+  banco[1].palavra   := 'PASCAL';         banco[1].categoria := 'LINGUAGEM';      banco[1].dica := 'Linguagem de programacao estruturada';
+  banco[2].palavra   := 'COMPUTADOR';     banco[2].categoria := 'TECNOLOGIA';     banco[2].dica := 'Maquina de processar dados';
+  banco[3].palavra   := 'ALGORITMO';      banco[3].categoria := 'PROGRAMACAO';    banco[3].dica := 'Sequencia de passos para resolver problema';
+  banco[4].palavra   := 'VARIAVEL';       banco[4].categoria := 'PROGRAMACAO';    banco[4].dica := 'Espaco na memoria para guardar valor';
+  banco[5].palavra   := 'MATRIZ';         banco[5].categoria := 'MATEMATICA';     banco[5].dica := 'Tabela de numeros em linhas e colunas';
+  banco[6].palavra   := 'REGISTRO';       banco[6].categoria := 'PROGRAMACAO';    banco[6].dica := 'Estrutura que agrupa campos diferentes';
+  banco[7].palavra   := 'COMPILADOR';     banco[7].categoria := 'TECNOLOGIA';     banco[7].dica := 'Transforma codigo fonte em executavel';
+  banco[8].palavra   := 'RECURSAO';       banco[8].categoria := 'PROGRAMACAO';    banco[8].dica := 'Funcao que chama a si mesma';
+  banco[9].palavra   := 'PONTEIRO';       banco[9].categoria := 'PROGRAMACAO';    banco[9].dica := 'Variavel que guarda endereco de memoria';
+  banco[10].palavra  := 'CURITIBA';       banco[10].categoria:= 'GEOGRAFIA';      banco[10].dica:= 'Capital do Parana';
+  banco[11].palavra  := 'TECLADO';        banco[11].categoria:= 'HARDWARE';       banco[11].dica:= 'Periferico de entrada de dados';
+  banco[12].palavra  := 'INTERNET';       banco[12].categoria:= 'TECNOLOGIA';     banco[12].dica:= 'Rede mundial de computadores';
+  banco[13].palavra  := 'BINARIO';        banco[13].categoria:= 'MATEMATICA';     banco[13].dica:= 'Sistema numerico de base dois';
+  banco[14].palavra  := 'FUNCAO';         banco[14].categoria:= 'PROGRAMACAO';    banco[14].dica:= 'Bloco de codigo que retorna valor';
+  banco[15].palavra  := 'VETOR';          banco[15].categoria:= 'PROGRAMACAO';    banco[15].dica:= 'Array de uma dimensao';
+  banco[16].palavra  := 'LOOP';           banco[16].categoria:= 'PROGRAMACAO';    banco[16].dica:= 'Estrutura de repeticao';
+  banco[17].palavra  := 'MEMORIA';        banco[17].categoria:= 'HARDWARE';       banco[17].dica:= 'Componente que armazena dados temporarios';
+  banco[18].palavra  := 'ARQUIVO';        banco[18].categoria:= 'PROGRAMACAO';    banco[18].dica:= 'Estrutura de dados em disco';
+  banco[19].palavra  := 'SORTEAR';        banco[19].categoria:= 'MATEMATICA';     banco[19].dica:= 'Escolher aleatoriamente';
+  banco[20].palavra  := 'PROCESSADOR';    banco[20].categoria:= 'HARDWARE';       banco[20].dica:= 'Cerebro do computador';
+END;
+
+PROCEDURE LimparTela;
+BEGIN
+  CLRSCR;
+END;
+
+PROCEDURE Pausa;
+BEGIN
+  WRITELN;
+  WRITE('Pressione ENTER para continuar...');
+  READLN;
+END;
+
+FUNCTION SorteiarPalavra: INTEGER;
+VAR seed: LONGINT;
+BEGIN
+  seed := 0;
+  Randomize;
+  SorteiarPalavra := (Random(total_palavras)) + 1;
+END;
+
+PROCEDURE DesenharForca(erros: INTEGER);
+BEGIN
+  WRITELN('  +---+');
+  IF erros >= 1 THEN WRITELN('  |   |') ELSE WRITELN('  |    ');
+  IF erros >= 2 THEN WRITELN('  O   |') ELSE WRITELN('      |');
+  IF erros = 3  THEN WRITELN('  |   |')
+  ELSE IF erros = 4 THEN WRITELN(' /|   |')
+  ELSE IF erros >= 5 THEN WRITELN(' /|\  |')
+  ELSE WRITELN('      |');
+  IF erros = 6  THEN WRITELN(' / \  |') ELSE WRITELN('      |');
+  WRITELN('      |');
+  WRITELN('=========');
+  WRITELN('Erros: ', erros, '/', MAX_ERROS);
+END;
+
+PROCEDURE ExibirPalavraOculta(palavra: STRING; letras_certas: STRING);
+VAR i: INTEGER;
+BEGIN
+  WRITE('Palavra: ');
+  FOR i := 1 TO LENGTH(palavra) DO
+  BEGIN
+    IF POS(palavra[i], letras_certas) > 0 THEN
+      WRITE(palavra[i], ' ')
+    ELSE
+      WRITE('_ ');
+  END;
+  WRITELN;
+END;
+
+FUNCTION PalavraCompleta(palavra: STRING; letras_certas: STRING): BOOLEAN;
+VAR i: INTEGER;
+BEGIN
+  PalavraCompleta := TRUE;
+  FOR i := 1 TO LENGTH(palavra) DO
+    IF POS(palavra[i], letras_certas) = 0 THEN
+    BEGIN
+      PalavraCompleta := FALSE;
+      EXIT;
+    END;
+END;
+
+FUNCTION LetraJaUsada(letra: CHAR; usadas: STRING): BOOLEAN;
+BEGIN
+  LetraJaUsada := POS(letra, usadas) > 0;
+END;
+
+PROCEDURE ExibirLetrasUsadas(usadas: STRING);
+BEGIN
+  WRITE('Letras usadas: ');
+  IF LENGTH(usadas) = 0 THEN
+    WRITELN('nenhuma')
+  ELSE
+    WRITELN(usadas);
+END;
+
+PROCEDURE JogarRodada(VAR jogador: TJogador; indice: INTEGER);
+VAR
+  erros        : INTEGER;
+  letras_certas: STRING;
+  letras_erradas: STRING;
+  letra        : CHAR;
+  linha        : STRING[5];
+  ganhou       : BOOLEAN;
+  pediu_dica   : BOOLEAN;
+BEGIN
+  erros         := 0;
+  letras_certas := '';
+  letras_erradas:= '';
+  jogador.letras_usadas := '';
+  ganhou        := FALSE;
+  pediu_dica    := FALSE;
+
+  REPEAT
+    LimparTela;
+    WRITELN('=== JOGO DA FORCA === Jogador: ', jogador.nome);
+    WRITELN('Categoria: ', banco[indice].categoria);
+    WRITELN;
+    DesenharForca(erros);
+    WRITELN;
+    ExibirPalavraOculta(banco[indice].palavra, letras_certas);
+    WRITELN;
+    ExibirLetrasUsadas(jogador.letras_usadas);
+    WRITELN;
+
+    IF pediu_dica THEN
+      WRITELN('Dica: ', banco[indice].dica);
+
+    WRITELN;
+    WRITELN('9 - Pedir dica  |  0 - Desistir');
+    WRITE('Digite uma letra: ');
+    READLN(linha);
+    linha := UPCASE(linha);
+
+    IF linha = '0' THEN
+    BEGIN
+      erros := MAX_ERROS;
+    END
+    ELSE IF linha = '9' THEN
+    BEGIN
+      pediu_dica := TRUE;
+    END
+    ELSE IF LENGTH(linha) = 1 THEN
+    BEGIN
+      letra := linha[1];
+      IF (letra < 'A') OR (letra > 'Z') THEN
+      BEGIN
+        WRITELN('Digite apenas letras!');
+        Pausa;
+      END
+      ELSE IF LetraJaUsada(letra, jogador.letras_usadas) THEN
+      BEGIN
+        WRITELN('Letra ja usada!');
+        Pausa;
+      END
+      ELSE
+      BEGIN
+        jogador.letras_usadas := jogador.letras_usadas + letra;
+        IF POS(letra, banco[indice].palavra) > 0 THEN
+        BEGIN
+          letras_certas := letras_certas + letra;
+          WRITELN('*** ACERTOU! ***');
+        END
+        ELSE
+        BEGIN
+          letras_erradas := letras_erradas + letra;
+          erros := erros + 1;
+          WRITELN('--- Errou! ---');
+        END;
+        Pausa;
+      END;
+    END
+    ELSE
+    BEGIN
+      WRITELN('Digite apenas uma letra!');
+      Pausa;
+    END;
+
+    ganhou := PalavraCompleta(banco[indice].palavra, letras_certas);
+
+  UNTIL ganhou OR (erros >= MAX_ERROS);
+
+  LimparTela;
+  DesenharForca(erros);
+  WRITELN;
+  ExibirPalavraOculta(banco[indice].palavra, banco[indice].palavra);
+  WRITELN;
+  WRITELN('A palavra era: ', banco[indice].palavra);
+  WRITELN;
+
+  IF ganhou THEN
+  BEGIN
+    WRITELN('*** PARABENS ', jogador.nome, '! VOCE ACERTOU! ***');
+    jogador.vitorias := jogador.vitorias + 1;
+  END
+  ELSE
+  BEGIN
+    WRITELN('--- Que pena, ', jogador.nome, '! Voce perdeu! ---');
+    jogador.derrotas := jogador.derrotas + 1;
+  END;
+  Pausa;
+END;
+
+PROCEDURE ExibirPlacar;
+BEGIN
+  LimparTela;
+  WRITELN('╔══════════════════════════════════════╗');
+  WRITELN('║             PLACAR GERAL             ║');
+  WRITELN('╠══════════════════════════════════════╣');
+  WRITELN('║ JOGADOR              VITORIAS DERROTAS║');
+  WRITELN('╠══════════════════════════════════════╣');
+  WRITELN('║ ', J1.nome:20, J1.vitorias:5, '   ', J1.derrotas:5, '  ║');
+  WRITELN('║ ', J2.nome:20, J2.vitorias:5, '   ', J2.derrotas:5, '  ║');
+  WRITELN('╠══════════════════════════════════════╣');
+  IF J1.vitorias > J2.vitorias THEN
+    WRITELN('║ Lider: ', J1.nome:28, '  ║')
+  ELSE IF J2.vitorias > J1.vitorias THEN
+    WRITELN('║ Lider: ', J2.nome:28, '  ║')
+  ELSE
+    WRITELN('║ Empate tecnico!                      ║');
+  WRITELN('╚══════════════════════════════════════╝');
+  Pausa;
+END;
+
+PROCEDURE JogarPartida;
+VAR
+  indice : INTEGER;
+  vez    : INTEGER;
+BEGIN
+  vez := 1;
+  indice := SorteiarPalavra;
+
+  IF vez = 1 THEN
+  BEGIN
+    LimparTela;
+    WRITELN('Vez de: ', J1.nome);
+    Pausa;
+    JogarRodada(J1, indice);
+    indice := SorteiarPalavra;
+    LimparTela;
+    WRITELN('Vez de: ', J2.nome);
+    Pausa;
+    JogarRodada(J2, indice);
+  END;
+
+  ExibirPlacar;
+END;
+
+BEGIN
+  Randomize;
+  InicializarBanco;
+
+  LimparTela;
+  WRITELN('╔══════════════════════════════════╗');
+  WRITELN('║       JOGO DA FORCA - T12        ║');
+  WRITELN('║  Fernando Augusto Bueno          ║');
+  WRITELN('╚══════════════════════════════════╝');
+  WRITELN;
+  WRITE('Nome do Jogador 1: '); READLN(J1.nome);
+  WRITE('Nome do Jogador 2: '); READLN(J2.nome);
+  J1.nome := UPCASE(J1.nome);
+  J2.nome := UPCASE(J2.nome);
+  J1.vitorias := 0; J1.derrotas := 0;
+  J2.vitorias := 0; J2.derrotas := 0;
+
+  jogar_de_novo := TRUE;
+  WHILE jogar_de_novo DO
+  BEGIN
+    LimparTela;
+    WRITELN('╔══════════════════════════════════╗');
+    WRITELN('║       JOGO DA FORCA - T12        ║');
+    WRITELN('╠══════════════════════════════════╣');
+    WRITELN('║  1 - Jogar rodada                ║');
+    WRITELN('║  2 - Ver placar                  ║');
+    WRITELN('║  3 - Sair                        ║');
+    WRITELN('╚══════════════════════════════════╝');
+    WRITELN;
+    REPEAT
+      WRITE('Opcao: ');
+      READLN(opcao);
+      IF (opcao < 1) OR (opcao > 3) THEN
+        WRITELN('Opcao invalida!');
+    UNTIL (opcao >= 1) AND (opcao <= 3);
+
+    CASE opcao OF
+      1: JogarPartida;
+      2: ExibirPlacar;
+      3: jogar_de_novo := FALSE;
+    END;
+  END;
+
+  LimparTela;
+  WRITELN('Obrigado por jogar!');
+  WRITELN('Placar final:');
+  WRITELN(J1.nome, ': ', J1.vitorias, ' vitorias');
+  WRITELN(J2.nome, ': ', J2.vitorias, ' vitorias');
+  IF J1.vitorias > J2.vitorias THEN
+    WRITELN('Vencedor geral: ', J1.nome)
+  ELSE IF J2.vitorias > J1.vitorias THEN
+    WRITELN('Vencedor geral: ', J2.nome)
+  ELSE
+    WRITELN('Resultado final: EMPATE!');
+  WRITELN;
+  WRITELN('Autor: Fernando Augusto Bueno Canquerini');
+END.
