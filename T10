@@ -1,0 +1,117 @@
+Program T10FERNANDO_LUCAS;
+//AUTORES: Fernando Augusto bueno canquerini
+USES TARDENOITE;
+VAR ARQ:FILE OF REGIS;
+    REG:REGIS;
+    VET:VETOR;
+    CARS, CCLS:STRING[2];
+    CLCS:STRING[3];
+    CLGS:STRING[4];
+    x,y,IND,PF,PFI,CC,TOTAL,OP,CARANT,CONTL:INTEGER;
+
+ CONST CARGOS:ARRAY [1..12] OF STRING[22]=
+('ENGANADOR DE CHEFE    ','ENROLADOR DE TRABALHO ','PENSADOR              ','ANALISTA DE SISTEMAS  ',
+ 'DEGUSTADOR DE CERVEJA ','TECNICO EM REDES      ','CONTADOR DE ESTORIAS  ','SAI DA AULA ANTES     ',
+ 'JOGADOR DE PING PONG  ','SEGURANCA DE BANHEIRO ','GESTOR DE BORBOLETAS  ','LEVA E TRAZ CONVERSA  ' );
+Begin
+  ASSIGN(ARQ,'CAND.IND');
+  RESET(ARQ);
+  REPEAT
+   WRITELN('1- Ordem alfabética de classificados por cargo');
+   WRITELN('2- Ordem de classificação por cargo');
+   WRITELN('3- Ordem de classificação geral');
+	 LEIA('Digite a opção: ',OP);
+	 IF(OP<1) OR (OP>3) THEN
+	  WRITE('ILEGAL');
+	UNTIL (OP>0) AND (OP<4);
+// MONTAR VETOR
+	PFI:=0;
+	IND:=0;
+	WHILE (NOT EOF(ARQ)) DO
+		BEGIN
+			read(ARQ,REG);
+			IF(OP=1)THEN
+			 BEGIN
+				IF(REG.CCL <> 0)THEN
+					BEGIN
+						IND:=IND+1;
+						VET[IND].PF:=PFI;
+						STR(REG.CCL:2, CCLS);
+						VET[IND].CC:=CCLS + REG.NOME;
+					END;
+				END
+			ELSE
+				BEGIN
+					IND:=IND+1;
+					VET[IND].PF:=PFI;
+					IF(OP=2)THEN
+						 BEGIN
+						  STR(REG.CAR:2,CARS);
+						  STR(REG.CLC:3,CLCS);
+						  VET[IND].CC:=CARS+CLCS;
+						 END
+					ELSE
+						IF(OP=3)THEN
+							BEGIN
+							  STR(REG.CLG:4,CLGS);
+							  VET[IND].CC:=CLGS;
+							END;
+							END;
+			PFI:=PFI+1;				 
+		END;				
+  WRITELN('LIDOS=',IND:5,' REGISTROS');
+  FOR x:=1 TO 20 DO
+   WRITELN(x:5,VET[x].PF:5,' ',VET[x].CC);      
+  TOTAL:=IND;
+  writeln('ORDENANDO, AGUARDE');
+	ORDEM(VET,TOTAL);    
+  FOR x:=1 TO 20 DO
+   WRITELN(x:5,VET[x].PF:5,' ',VET[x].CC);    
+  WRITELN('ENTER PARA CONTINUAR');
+  READLN;
+  CONTL:=1;
+	FOR y:=1 TO TOTAL DO
+	 BEGIN
+	  SEEK(ARQ,VET[y].PF);
+		read(ARQ,REG);
+     IF((CONTL MOD 25=1) OR (CARANT<>REG.CAR) AND (OP<>3))THEN   
+	    BEGIN
+	      READLN;
+	      CLRSCR;
+				WRITELN;
+				IF(OP=1)THEN
+				 BEGIN
+				 	WRITELN('CURSO: ', REG.CCL:2, ' ', CARGOS[REG.CCL]);
+					WRITELN('  ORD  NUM N O M E                             NASCIMENTO CAR');
+	       END
+	      ELSE
+	       BEGIN
+	       	IF(OP=2)THEN
+	       		WRITELN('CURSO: ', REG.CAR:2, ' ', CARGOS[REG.CAR])
+	       	ELSE
+	       		WRITELN('RELAÇÃO ORDEM DE CLASSIFICAÇÃO GERAL');
+					WRITELN('  ORD INSC N O M E                              SOM  N4  N5  N3  N2  N6  N1 NASCIMENTO CAR OBSERVAÇÃO');	       	                                                       
+				 END;
+	      CARANT:=REG.CAR;
+				CONTL:=1;
+	     END;
+     IF(OP=1)THEN
+			WRITELN(y:5,REG.NUM:5,' ',REG.NOME,' ',REG.DATA.DIA,'/',REG.DATA.MES,'/',REG.DATA.ANO,REG.CAR:3)
+		ELSE
+			BEGIN
+				WRITE(y:5,REG.NUM:5,' ',REG.NOME, REG.SOM:5, REG.NOTAS[4]:4, REG.NOTAS[5]:4, REG.NOTAS[3]:4, REG.NOTAS[2]:4, REG.NOTAS[6]:4, REG.NOTAS[1]:4);
+				WRITE(' ',REG.DATA.DIA,'/',REG.DATA.MES,'/',REG.DATA.ANO,REG.CAR:3);
+				IF(REG.FALTA=1)THEN
+					WRITELN('  *FALTOU*')
+				ELSE
+					IF(REG.CCL<>0)THEN
+						WRITELN('  CLAS CAR=', REG.CCL)
+					ELSE
+						WRITELN;
+						END;
+		CONTL:=CONTL+1;
+		CARANT:=REG.CAR;
+	 END;	
+	TERMINE;
+	CLOSE(ARQ);  
+End.
