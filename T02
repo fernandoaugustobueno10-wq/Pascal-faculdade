@@ -1,0 +1,57 @@
+Program T02Fernando ;
+//autor:Fernando Augusto Bueno Canquerini
+uses tardenoite;
+var
+  diaNasc, mesNasc, anoNasc: integer;
+  diaHoje, mesHoje, anoHoje: integer;
+  idadeAnos, idadeMeses, idadeDias: integer;
+  dataValida: boolean;
+  mesAux, anoAux: integer;
+function DataNascValida(dN, mN, aN, dH, mH, aH: integer): boolean;
+begin
+  if aN > aH then DataNascValida := false
+  else if (aN = aH) and (mN > mH) then DataNascValida := false
+  else if (aN = aH) and (mN = mH) and (dN > dH) then DataNascValida := false
+  else DataNascValida := true;
+end;
+begin
+  diahoje := 15;
+  mesHoje := 4;
+  anoHoje := 2025;
+ repeat
+    LEIA('Digite o dia de nascimento: ', diaNasc);
+    LEIA('Digite o mes de nascimento: ', mesNasc);
+    LEIA('Digite o ano de nascimento: ', anoNasc);
+    dataValida := VALDATA(diaNasc, mesNasc, anoNasc) and
+		DataNascValida(diaNasc, mesNasc, anoNasc, diaHoje, mesHoje, anoHoje);
+    if not dataValida then
+      writeln('Data inválida. Tente novamente.');
+  until dataValida;
+  idadeAnos := anoHoje - anoNasc;
+  idadeMeses := mesHoje - mesNasc;
+  idadeDias := diaHoje - diaNasc;
+ if idadeDias < 0 then
+  begin
+    mesHoje := mesHoje - 1;
+    if mesHoje = 0 then
+    begin
+      mesAux := 12;
+      anoAux := anoHoje - 1;
+    end
+    else
+    begin
+      mesAux := mesHoje;
+      anoAux := anoHoje;
+    end;
+    idadeDias := idadeDias + DIAMAXM(mesAux, anoAux);
+  end;
+ if idadeMeses < 0 then
+  begin
+    idadeMeses := idadeMeses + 12;
+    idadeAnos := idadeAnos - 1;
+  end;
+  writeln;
+  writeln('Idade: ', idadeAnos, ' anos, ', idadeMeses, ' meses e ', idadeDias, ' dias.');
+  writeln;
+  TERMINE;
+end.
